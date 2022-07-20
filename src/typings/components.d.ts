@@ -12,7 +12,5 @@ declare module '@vue/runtime-core' {
     NDataTable: typeof import('naive-ui')['NDataTable']
     NSpace: typeof import('naive-ui')['NSpace']
     NUpload: typeof import('naive-ui')['NUpload']
-    RouterLink: typeof import('vue-router')['RouterLink']
-    RouterView: typeof import('vue-router')['RouterView']
   }
 }

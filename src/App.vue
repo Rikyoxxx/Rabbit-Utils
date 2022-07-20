@@ -28,7 +28,7 @@
 </template>
 
 <script setup lang="ts">
-import { message } from '@tauri-apps/api/dialog';
+// import { message } from '@tauri-apps/api/dialog';
 import { read as ReadExcel, writeFileXLSX, utils as ExcelUtils } from 'xlsx'
 import { useLoadingEmpty } from '@/hooks'
 import type {
@@ -239,16 +239,21 @@ const pagination = reactive({
   }
 })
 
-const transferCache = new Map<string, [string[], Map<string, string>]>()
+const transferCache = new Map<string, {
+  key?: [string[], Map<string, string>],
+  title?: [string[], Map<string, string>]
+}>()
 /**
  * 把表格列配置转换为映射表
  * @param type true title2key, false key2title
  */
 const transferColumns2Map = (type = false) => {
   const _json = JSON.stringify(tableColumns)
+  let _cache = transferCache.get(_json)
 
-  if (transferCache.has(_json)) {
-    return transferCache.get(_json)!
+  if (_cache) {
+    if (type && _cache.title) return _cache.title
+    if (!type && _cache.key) return _cache.key
   }
 
   const _arr: string[] = []
@@ -265,10 +270,11 @@ const transferColumns2Map = (type = false) => {
   })
 
   const _map = new Map<string, string>(_attr)
-  const _cache: [string[], Map<string, string>] = [_arr, _map]
+  _cache = _cache || {}
+  Object.assign(_cache, type ? { title: [_arr, _map] } : { key: [_arr, _map] })
   transferCache.set(_json, _cache)
 
-  return _cache
+  return [_arr, _map] as [string[], Map<string, string>]
 }
 
 /** 解析Excel文件 */
@@ -280,7 +286,8 @@ const readXlsxFileToJson = async (file: File) => {
     const sheet = workbook.Sheets[workbook.SheetNames[0]]
     xlsxData = ExcelUtils.sheet_to_json(sheet, { dateNF: 'yyyy/MM/dd hh:mm:ss', raw: false })
   } catch (_) {
-    message('表格格式有误！', { title: '错误', type: 'error' })
+    // message('表格格式有误！', { title: '错误', type: 'error' })
+    alert('表格格式有误！')
   }
 
   return xlsxData
@@ -290,7 +297,8 @@ const handleDatasetSelect = async ({ file }: { file: UploadFileInfo }) => {
   const _file = file.file
   if (!_file) return false
   if (file.type != 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet') {
-    message('请选择正确的XLSX文件！', { title: '错误', type: 'error' })
+    // message('请选择正确的XLSX文件！', { title: '错误', type: 'error' })
+    alert('请选择正确的XLSX文件！')
     return false
   }
 
@@ -307,7 +315,8 @@ const handleDatasetSelect = async ({ file }: { file: UploadFileInfo }) => {
     setEmpty(!uploadDataset.value.length)
     pagination.page = 1
   } catch (_) {
-    message('表格格式有误！', { title: '错误', type: 'error' })
+    // message('表格格式有误！', { title: '错误', type: 'error' })
+    alert('表格格式有误！')
   } finally {
     clearTimeout(timer)
     loading && endLoading()
@@ -321,15 +330,21 @@ const handleDatasetClear = () => {
 }
 
 const handleDatasetExport = async () => {
+  const [titles, titlesMap] = transferColumns2Map(true)
+  const data = uploadDataset.value.map(data => Object.assign({}, ...titles.map(title => ({ [title]: data[titlesMap.get(title)!] || '' }))))
+
+
   const workbook = ExcelUtils.book_new();
-  const worksheet = ExcelUtils.json_to_sheet(uploadDataset.value);
+  const worksheet = ExcelUtils.json_to_sheet(data);
   ExcelUtils.book_append_sheet(workbook, worksheet, 'Sheet1');
 
   try {
     await writeFileXLSX(workbook, '合并结果.xlsx');
-    message('导出成功', { title: '成功' })
+    // message('导出成功', { title: '成功' })
+    alert('导出成功')
   } catch (error) {
-    message(error as string, { title: '错误', type: 'error' })
+    // message(error as string, { title: '错误', type: 'error' })
+    alert(error)
   }
 
 }

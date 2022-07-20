@@ -9,7 +9,6 @@ app.use(compression())
 
 app.use((req, res, next) => {
   // 将 index.html 设为 no-cache
-  console.log(req.url)
   if (req.url == '/index.html') {
     res.setHeader('Cache-control', 'no-cache')
   }

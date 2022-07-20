@@ -82,11 +82,10 @@ jobs:
       # 获取 yarn 缓存路径
       - name: Get yarn cache directory path
         id: yarn-cache-dir-path
-        run: echo "::set-output name=dir::$(yarn config get cacheFolder)"
+        run: echo "::set-output name=dir::$(yarn cache dir)"
 
       # 使用 yarn 缓存
-      - name: Yarn cache
-        uses: actions/cache@v2
+      - uses: actions/cache@v3
         id: yarn-cache # use this to check for `cache-hit` (`steps.yarn-cache.outputs.cache-hit != 'true'`)
         with:
           path: ${{ steps.yarn-cache-dir-path.outputs.dir }}
@@ -103,6 +102,6 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           tagName: Rabbit_Utils-v__VERSION__ # the action automatically replaces \_\_VERSION\_\_ with the app version
-          releaseName: "Rabbit Utils v__VERSION__"
+          releaseName: 'Rabbit Utils v__VERSION__'
           releaseDraft: true
           prerelease: false

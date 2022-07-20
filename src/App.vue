@@ -28,9 +28,8 @@
 </template>
 
 <script setup lang="ts">
-import { writeBinaryFile, BaseDirectory } from '@tauri-apps/api/fs';
 import { message } from '@tauri-apps/api/dialog';
-import { read as ReadExcel, write as WriteExcel, utils as ExcelUtils } from 'xlsx'
+import { read as ReadExcel, writeFileXLSX, utils as ExcelUtils } from 'xlsx'
 import { useLoadingEmpty } from '@/hooks'
 import type {
   DataTableColumns,
@@ -326,9 +325,8 @@ const handleDatasetExport = async () => {
   const worksheet = ExcelUtils.json_to_sheet(uploadDataset.value);
   ExcelUtils.book_append_sheet(workbook, worksheet, 'Sheet1');
 
-  const buf = WriteExcel(workbook, { type: "array", bookType: "xlsx" });
   try {
-    await writeBinaryFile('合并结果.xlsx', buf, { dir: BaseDirectory.Download });
+    await writeFileXLSX(workbook, '合并结果.xlsx');
     message('导出成功', { title: '成功' })
   } catch (error) {
     message(error as string, { title: '错误', type: 'error' })
